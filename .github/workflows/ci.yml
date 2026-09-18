@@ -1,0 +1,42 @@
+name: CI Backend
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-build-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      - name: Installer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # npm install plutôt que npm ci : aucun package-lock.json n'est encore committé
+      # (généré par le premier `npm install` local). Une fois le lockfile présent dans
+      # le dépôt, remplacer par `npm ci` (installation reproductible, plus stricte) et
+      # réactiver `cache: 'npm'` ci-dessus.
+      - name: Installer les dépendances
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Tests unitaires
+        run: npm test -- --ci --coverage
+
+      - name: Publier la couverture de test
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/

@@ -11,13 +11,70 @@ rapprochement de caisse avec séparation des tâches.
 ```bash
 cp .env.example .env        # ajuster les secrets
 docker compose up -d        # lance PostgreSQL
-npm install
+npm install                 # génère aussi package-lock.json — à committer ensuite
+npm run migration:run       # applique le schéma (voir section Migrations ci-dessous)
 npm run start:dev
 ```
 
-L'API démarre sur `http://localhost:3000`. En développement, `synchronize: true`
-crée le schéma automatiquement depuis les entités — **à remplacer par des migrations
-TypeORM avant tout déploiement réel** (voir `src/config/typeorm.config.ts`).
+L'API démarre sur `http://localhost:3000`.
+
+## Base de données : migrations, pas de synchronize
+
+`synchronize` est désactivé sans exception, y compris en développement (voir le
+commentaire dans `src/config/typeorm.config.ts`). Le schéma est géré exclusivement
+par des migrations TypeORM, versionnées comme le reste du code :
+
+```bash
+npm run migration:run                                    # applique les migrations en attente
+npm run migration:generate -- src/migrations/NomChangement  # après avoir modifié une entité
+npm run migration:revert                                 # annule la dernière migration
+```
+
+La migration initiale (`src/migrations/1758000000000-InitSchema.ts`) crée le schéma
+complet en SQL explicite (pas de génération automatique) : chaque table, contrainte et
+index y est écrit et commenté à la main, pour rester lisible en revue de code — cohérent
+avec la posture d'audit du projet.
+
+**Point d'attention technique réglé pendant l'écriture de cette migration** : les
+relations TypeORM (`Device.agent`, `Transaction.agent`/`device`, `CashClosure.agent`,
+`Deposit.closure`/`receiver`) déclarent maintenant explicitement `@JoinColumn({ name: '...' })`
+pour pointer vers la colonne FK "brute" déjà présente sur l'entité (`agentId`, `deviceId`,
+etc.). Sans ça, TypeORM tente de gérer une deuxième colonne FK implicite en plus de la
+colonne explicite, ce qui provoque un conflit de schéma — indétectable avec
+`synchronize: true` mais immédiat en écrivant une migration manuelle.
+
+## Tests
+
+```bash
+npm test              # tests unitaires
+npm run test:cov      # avec couverture
+```
+
+Les tests couvrent en priorité le cœur anti-fraude, celui que la revue critique de
+sécurité identifie comme critique (P0) :
+
+- `src/transactions/utils/hash-chain.util.spec.ts` — déterminisme et sensibilité du
+  hash-chaining à toute altération a posteriori.
+- `src/transactions/utils/signature.util.spec.ts` — vérification Ed25519 avec de vraies
+  paires de clés générées à la volée (signature valide, clé usurpée, payload trafiqué,
+  entrée malformée).
+- `src/transactions/transactions.service.spec.ts` — le comportement de `sync()` de bout
+  en bout avec un repository mocké : idempotence sur id dupliqué, rejet de signature
+  invalide, flag `clockTampered` sur dérive d'horloge, rejet total d'un lot venant d'un
+  device bloqué/révoqué, continuité de la chaîne de hash entre deux transactions.
+
+## Intégration continue
+
+`.github/workflows/ci.yml` exécute lint + build + tests à chaque push/PR sur `main`.
+Utilise `npm install` en attendant qu'un `package-lock.json` soit committé (généré par
+le premier `npm install` local) — remplacer ensuite par `npm ci` pour des builds
+reproductibles (voir commentaire dans le workflow).
+
+## Qualité de code
+
+- `.eslintrc.cjs` + `.prettierrc` : `npm run lint` / `npm run format`.
+- `.gitattributes` normalise les fins de ligne en LF dans le dépôt, quelle que soit la
+  plateforme locale (élimine les warnings CRLF vus sous Windows).
 
 ## Structure
 
@@ -51,7 +108,6 @@ squelette — à trancher avec l'équipe avant la mise en prod :
   existe mais aucun canal SMS n'est branché).
 - **Play Integrity API** côté mobile (hors périmètre backend).
 - **Certificate pinning** côté mobile (hors périmètre backend).
-- **Migrations TypeORM** — `synchronize: true` n'est acceptable qu'en développement.
 - **Conformité APDP Bénin** — déclaration/autorisation sur les données personnelles
   (agents, contribuables), et choix d'hébergement local/régional à valider avant tout
   déploiement.

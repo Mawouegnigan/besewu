@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -27,7 +28,12 @@ export class Device {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  // @JoinColumn explicite : sans lui, TypeORM tente de gérer une deuxième colonne
+  // FK implicite en plus de la colonne "agentId" ci-dessous, ce qui provoque un
+  // conflit de schéma (constaté en écrivant la migration manuelle — voir migration
+  // InitSchema : une seule colonne "agentId" existe réellement en base).
   @ManyToOne(() => User, { eager: true })
+  @JoinColumn({ name: 'agentId' })
   agent: User;
 
   @Column()
@@ -40,7 +46,7 @@ export class Device {
   @Column({ type: 'enum', enum: DeviceStatus, default: DeviceStatus.ACTIVE })
   status: DeviceStatus;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   blockedReason: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })

@@ -1,4 +1,12 @@
-import { Column, CreateDateColumn, Entity, Index, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 /**
@@ -13,6 +21,7 @@ export class CashClosure {
   id: string;
 
   @ManyToOne(() => User, { eager: true })
+  @JoinColumn({ name: 'agentId' })
   agent: User;
 
   @Column()

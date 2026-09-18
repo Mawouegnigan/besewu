@@ -16,10 +16,10 @@ export class AuditLog {
   id: string;
 
   @Index()
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   actorId: string | null; // null = action système (ex. job de vérification offline)
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   actorRole: string | null;
 
   @Index()
@@ -27,17 +27,17 @@ export class AuditLog {
   action: string; // ex. 'TRANSACTION_SYNC', 'DEVICE_REVOKE', 'DISPUTE_RESOLVE', 'LOGIN_FAILED'
 
   @Index()
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   entityType: string | null; // ex. 'Transaction', 'Device', 'Deposit'
 
   @Index()
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   entityId: string | null;
 
   @Column({ type: 'jsonb', nullable: true })
   metadata: Record<string, unknown> | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   ipAddress: string | null;
 
   @CreateDateColumn()

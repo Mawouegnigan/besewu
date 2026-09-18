@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
   PrimaryColumn,
 } from 'typeorm';
@@ -26,7 +27,11 @@ export class Transaction {
   @PrimaryColumn('uuid')
   id: string;
 
+  // Voir la note dans devices/entities/device.entity.ts : @JoinColumn est requis
+  // explicitement dès qu'une colonne FK "brute" (deviceId/agentId) coexiste avec
+  // la relation, pour éviter que TypeORM ne crée une colonne implicite en doublon.
   @ManyToOne(() => Device, { eager: true })
+  @JoinColumn({ name: 'deviceId' })
   device: Device;
 
   @Column()
@@ -34,6 +39,7 @@ export class Transaction {
 
   @Index()
   @ManyToOne(() => User, { eager: true })
+  @JoinColumn({ name: 'agentId' })
   agent: User;
 
   @Column()
@@ -45,7 +51,7 @@ export class Transaction {
   @Column()
   taxType: string; // ex. 'place_marche', 'stationnement', ...
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   marketOrSector: string | null;
 
   // Géolocalisation obligatoire (section 4) — permet de vérifier que l'agent était
@@ -70,7 +76,7 @@ export class Transaction {
 
   // Signature Ed25519 de la transaction par la clé privée du device (section 3, Option B),
   // encodée base64. Vérifiée contre Device.publicKey à la synchro.
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   signature: string | null;
 
   // Hash-chaining (section 7).
@@ -83,10 +89,10 @@ export class Transaction {
   @Column({ type: 'enum', enum: TransactionStatus, default: TransactionStatus.SYNCED })
   status: TransactionStatus;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   cancelReason: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   cancelledBy: string | null; // userId du superviseur ayant validé l'annulation
 
   @CreateDateColumn()

@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -28,6 +29,7 @@ export class Deposit {
   id: string;
 
   @ManyToOne(() => CashClosure)
+  @JoinColumn({ name: 'closureId' })
   closure: CashClosure;
 
   @Column()
@@ -35,6 +37,7 @@ export class Deposit {
 
   // Le RECEVEUR qui a compté et saisi le dépôt — distinct de l'agent (séparation des tâches).
   @ManyToOne(() => User, { eager: true })
+  @JoinColumn({ name: 'receiverId' })
   receiver: User;
 
   @Column()
@@ -49,10 +52,10 @@ export class Deposit {
   @Column({ type: 'enum', enum: DepositStatus, default: DepositStatus.OK })
   status: DepositStatus;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   disputeNotes: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   resolvedBy: string | null;
 
   @Column({ type: 'timestamptz', nullable: true })
