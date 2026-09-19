@@ -1,4 +1,4 @@
-import { IsString, Length, Matches } from 'class-validator';
+import { IsOptional, IsString, Length, Matches } from 'class-validator';
 
 export class LoginDto {
   @IsString()
@@ -11,8 +11,11 @@ export class LoginDto {
   @Matches(/^\d+$/, { message: 'Le PIN doit être numérique' })
   pin: string;
 
-  // Identifiant du device appelant, pour vérifier qu'il n'est pas BLOCKED/REVOKED
-  // avant même d'émettre un token (défense en profondeur avec le DevicesModule).
+  // Identifiant du device appelant — REQUIS uniquement pour le rôle AGENT (dont le
+  // terminal doit être enrôlé et ACTIVE pour signer des transactions offline).
+  // Absent/ignoré pour les rôles portail web (maire, chef_equipe, receveur, auditeur),
+  // qui n'ont pas de notion de "device" au sens de ce système.
+  @IsOptional()
   @IsString()
-  deviceId: string;
+  deviceId?: string;
 }

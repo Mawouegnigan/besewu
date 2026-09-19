@@ -9,14 +9,43 @@ rapprochement de caisse avec séparation des tâches.
 ## Démarrage
 
 ```bash
-cp .env.example .env        # ajuster les secrets
+cp .env.example .env        # ajuster les secrets — voir "Validation d'environnement" ci-dessous
 docker compose up -d        # lance PostgreSQL
 npm install                 # génère aussi package-lock.json — à committer ensuite
 npm run migration:run       # applique le schéma (voir section Migrations ci-dessous)
+npm run seed                # crée des comptes de démo — sans ça, personne ne peut se connecter
 npm run start:dev
 ```
 
 L'API démarre sur `http://localhost:3000`.
+Documentation interactive (hors production) : `http://localhost:3000/docs`.
+Vérification de santé : `GET http://localhost:3000/health`.
+
+## Validation d'environnement
+
+`src/config/env.validation.ts` valide toutes les variables au démarrage (schéma Joi) :
+l'application refuse de démarrer si une variable requise manque ou a un type invalide
+(ex. `JWT_SECRET` trop court), plutôt que d'échouer plus tard de façon confuse.
+
+## Comptes de démo (`npm run seed`)
+
+Le système n'expose **aucun endpoint public d'inscription** (les comptes sont
+provisionnés par la mairie, jamais auto-créés — cohérent avec le RBAC). `npm run seed`
+crée un compte par rôle avec un PIN simple (**dev uniquement**, jamais en production),
+plus un device de test enrôlé et signé pour l'agent de démo. Le script est idempotent
+(relançable sans dupliquer) et affiche en sortie les identifiants, l'id du device, sa
+clé privée Ed25519 (pour signer des transactions de test), et des exemples `curl`
+prêts à l'emploi (login, sync de transaction).
+
+## Sécurité HTTP et documentation
+
+- **Helmet** (`app.use(helmet())` dans `main.ts`) — en-têtes de sécurité standard
+  (CSP, HSTS, X-Frame-Options, etc.).
+- **Swagger/OpenAPI** sur `/docs` (désactivé en production) — généré depuis les
+  contrôleurs (`@ApiTags`, `@ApiBearerAuth`). Les DTOs n'ont pas encore de
+  `@ApiProperty` détaillés : à enrichir progressivement.
+- **`GET /health`** — endpoint public minimal, vérifie la connexion à PostgreSQL,
+  utilisable par un load balancer ou un orchestrateur.
 
 ## Base de données : migrations, pas de synchronize
 
@@ -62,6 +91,23 @@ sécurité identifie comme critique (P0) :
   en bout avec un repository mocké : idempotence sur id dupliqué, rejet de signature
   invalide, flag `clockTampered` sur dérive d'horloge, rejet total d'un lot venant d'un
   device bloqué/révoqué, continuité de la chaîne de hash entre deux transactions.
+- `src/auth/auth.service.spec.ts` — la logique de connexion conditionnelle au rôle
+  (voir "Bug corrigé" ci-dessous) : un rôle non-agent se connecte sans deviceId, un
+  agent sans deviceId est rejeté, un agent avec le device d'un autre agent est rejeté,
+  un agent avec son propre device actif se connecte, un device bloqué est rejeté.
+
+### Bug corrigé pendant cette phase : device requis pour tous les rôles
+
+`AuthService.login` exigeait initialement un device `ACTIVE` pour **tous** les rôles,
+alors que la notion de "device enrôlé" (avec clé publique Ed25519 pour signer des
+transactions offline) n'a de sens que pour l'`AGENT`. Un `maire` ou un `receveur`
+utilisant un portail web n'a pas vocation à posséder un device au sens de ce système.
+
+Corrigé : `deviceId` est maintenant optionnel dans `LoginDto`, et seul le rôle `AGENT`
+déclenche la vérification — qui inclut désormais aussi que le device appartient bien à
+l'agent qui tente de se connecter (`device.agentId === user.id`), pas seulement qu'il
+est `ACTIVE` — defense in depth contre un agent qui emprunterait l'id du device d'un
+collègue.
 
 ## Intégration continue
 

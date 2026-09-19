@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser, AuthenticatedUser } from '../common/decorators/current-user.decorator';
@@ -6,6 +7,8 @@ import { Role } from '../common/enums/role.enum';
 import { ReconciliationService } from './reconciliation.service';
 import { CreateClosureDto, CreateDepositDto, ResolveDisputeDto } from './dto/create-deposit.dto';
 
+@ApiTags('reconciliation')
+@ApiBearerAuth()
 @Controller('reconciliation')
 @UseGuards(RolesGuard)
 export class ReconciliationController {

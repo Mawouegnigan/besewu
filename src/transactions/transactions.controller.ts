@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Public } from '../common/decorators/public.decorator';
@@ -7,6 +8,8 @@ import { Role } from '../common/enums/role.enum';
 import { TransactionsService } from './transactions.service';
 import { CancelTransactionDto, SyncTransactionsDto } from './dto/sync-transaction.dto';
 
+@ApiTags('transactions')
+@ApiBearerAuth()
 @Controller('transactions')
 @UseGuards(RolesGuard)
 export class TransactionsController {

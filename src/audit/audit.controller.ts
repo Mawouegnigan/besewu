@@ -1,9 +1,12 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { Role } from '../common/enums/role.enum';
 import { AuditService } from './audit.service';
 
+@ApiTags('audit')
+@ApiBearerAuth()
 @Controller('audit')
 @UseGuards(RolesGuard)
 @Roles(Role.MAIRE, Role.AUDITEUR)

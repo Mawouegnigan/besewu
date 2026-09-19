@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { getTypeOrmConfig } from './config/typeorm.config';
+import { envValidationSchema } from './config/env.validation';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
@@ -14,10 +15,17 @@ import { DevicesModule } from './devices/devices.module';
 import { AuthModule } from './auth/auth.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { ReconciliationModule } from './reconciliation/reconciliation.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validationSchema: envValidationSchema,
+      // abortEarly: false liste TOUTES les variables invalides d'un coup au démarrage,
+      // plutôt que de s'arrêter à la première — plus rapide à corriger en une passe.
+      validationOptions: { abortEarly: false },
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -30,6 +38,7 @@ import { ReconciliationModule } from './reconciliation/reconciliation.module';
     AuthModule,
     TransactionsModule,
     ReconciliationModule,
+    HealthModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },

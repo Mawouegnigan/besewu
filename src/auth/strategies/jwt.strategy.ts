@@ -18,7 +18,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     sub: string;
     username: string;
     role: string;
-    deviceId: string;
+    deviceId?: string;
   }): Promise<AuthenticatedUser> {
     // Le payload devient `request.user`. Toute vérification supplémentaire (ex. device
     // toujours actif) est faite au niveau des guards/services métier pour rester
