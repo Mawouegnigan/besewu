@@ -1,0 +1,54 @@
+name: besewu_app
+description: >
+  Besewu — application mobile de collecte des taxes municipales (Bénin).
+  Offline-first : fonctionne sans réseau, signe les transactions localement,
+  synchronise dès que la connexion revient.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Réseau
+  dio: ^5.5.0
+  connectivity_plus: ^6.0.5
+
+  # Stockage local chiffré (file d'attente offline des transactions)
+  drift: ^2.19.1
+  sqlite3_flutter_libs: ^0.5.24
+  path_provider: ^2.1.4
+  path: ^1.9.0
+
+  # Stockage sécurisé (clé privée Ed25519, session) — s'appuie sur Android
+  # Keystore / iOS Keychain pour le chiffrement au repos. Voir README pour la
+  # limite connue : ce n'est PAS une clé non-exportable au sens strict (section 3,
+  # Option B de la revue critique) sans code natif additionnel.
+  flutter_secure_storage: ^9.2.2
+
+  # Cryptographie Ed25519 (signature des transactions)
+  cryptography: ^2.7.0
+
+  # Génération d'UUID côté mobile — clé d'idempotence des transactions
+  uuid: ^4.4.2
+
+  # Géolocalisation obligatoire à chaque transaction (section 4 de la revue critique)
+  geolocator: ^13.0.1
+  permission_handler: ^11.3.1
+
+  intl: ^0.19.0
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  drift_dev: ^2.19.1
+  build_runner: ^2.4.12
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
