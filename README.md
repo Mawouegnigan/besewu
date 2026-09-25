@@ -3,8 +3,6 @@
 API NestJS + PostgreSQL pour la solution de collecte mobile des taxes municipales
 (Bénin). Ce squelette implémente les décisions **P0** de la revue critique du cahier
 des charges : idempotence + hash-chaining des transactions, signature Ed25519,
-horodatage serveur qui fait foi, RBAC, journal d'audit inaltérable, workflow de
-rapprochement de caisse avec séparation des tâches.
 
 ## Démarrage
 
