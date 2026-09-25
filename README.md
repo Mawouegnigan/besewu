@@ -1,4 +1,4 @@
-# Besewu — Backend
+## Backend
 
 API NestJS + PostgreSQL pour la solution de collecte mobile des taxes municipales
 (Bénin). Ce squelette implémente les décisions **P0** de la revue critique du cahier
